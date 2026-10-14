@@ -1,0 +1,22 @@
+# Exemplo de preenchimento para terraform.tfvars
+# Copie este arquivo para terraform.tfvars e preencha com seus dados reais:
+# cp terraform.tfvars.example terraform.tfvars
+
+compartment_ocid         = "ocid1.compartment.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+region                   = "sa-saopaulo-1"
+oci_config_profile       = "DEFAULT"
+ssh_public_key_path      = "~/.ssh/id_rsa.pub"
+availability_domain_name = "epuY:SA-SAOPAULO-1-AD-1"
+
+# OCIDs das imagens Ubuntu 24.04 LTS oficiais fixas (substitua pelo OCID correspondente à sua região)
+# Dica para listar no CLI da OCI:
+# oci compute image list --compartment-id <compartment-id> --operating-system "Canonical Ubuntu" --operating-system-version "24.04" --shape "VM.Standard.A1.Flex"
+ubuntu_arm_image_ocid = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaak2s..."
+
+# oci compute image list --compartment-id <compartment-id> --operating-system "Canonical Ubuntu" --operating-system-version "24.04" --shape "VM.Standard.E2.1.Micro"
+ubuntu_x86_image_ocid = "ocid1.image.oc1.sa-saopaulo-1.aaaaaaaam5x..."
+
+# Tags exigidas
+tag_project_arm   = "Blog-do-Zeca"
+tag_project_vault = "vault"
+tag_project_vpn   = "VpnManagement"
