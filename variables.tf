@@ -18,20 +18,6 @@ variable "ssh_public_key_path" {
   description = "Caminho no sistema operacional para o arquivo da chave SSH pública (ex: ~/.ssh/id_rsa.pub)"
 }
 
-variable "availability_domain_name" {
-  type        = string
-  description = "Nome do Availability Domain onde as instâncias serão criadas (ex: epuY:SA-SAOPAULO-1-AD-1)"
-}
-
-variable "ubuntu_arm_image_ocid" {
-  type        = string
-  description = "OCID da imagem oficial Ubuntu 24.04 LTS aarch64 (versão fixa para ARM)"
-}
-
-variable "ubuntu_x86_image_ocid" {
-  type        = string
-  description = "OCID da imagem oficial Ubuntu 24.04 LTS x86_64 (versão fixa para x86)"
-}
 
 variable "tag_project_arm" {
   type        = string

@@ -5,10 +5,10 @@ module "blog_do_zeca" {
   source = "./blog_do_zeca"
 
   compartment_ocid         = var.compartment_ocid
-  availability_domain_name = var.availability_domain_name
+  availability_domain_name = data.oci_identity_availability_domains.ads.availability_domains[0].name
   subnet_id                = oci_core_subnet.private_subnet.id
   public_subnet_id         = oci_core_subnet.public_subnet.id
-  ubuntu_arm_image_ocid    = var.ubuntu_arm_image_ocid
+  ubuntu_arm_image_ocid    = data.oci_core_images.ubuntu_arm.images[0].id
   ssh_public_key_path      = var.ssh_public_key_path
   tag_project              = var.tag_project_arm
   arm_ocpus                = 2
@@ -21,9 +21,9 @@ module "x86" {
   source = "./x86"
 
   compartment_ocid         = var.compartment_ocid
-  availability_domain_name = var.availability_domain_name
+  availability_domain_name = data.oci_identity_availability_domains.ads.availability_domains[0].name
   subnet_id                = oci_core_subnet.private_subnet.id
-  ubuntu_x86_image_ocid    = var.ubuntu_x86_image_ocid
+  ubuntu_x86_image_ocid    = data.oci_core_images.ubuntu_x86.images[0].id
   ssh_public_key_path      = var.ssh_public_key_path
   tag_vault                = var.tag_project_vault
   tag_vpn                  = var.tag_project_vpn

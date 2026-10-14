@@ -41,13 +41,14 @@ oci-blog/
 ├── .gitignore
 ├── README.md
 ├── backend.tf              # Backend NATIVO da OCI (backend "oci") no bucket tf-state-zekinhas
+├── datasources.tf          # Descoberta AUTOMÁTICA de Availability Domain e Imagens Ubuntu 24.04 LTS
 ├── provider.tf             # Provedor OCI configurado com ~/.oci/config (perfil DEFAULT)
 ├── variables.tf            # Apenas declaração de variáveis de entrada (SEM NENHUM DEFAULT)
 ├── terraform.tfvars        # Valores das variáveis (ignorado no Git)
 ├── terraform.tfvars.example# Modelo de exemplo seguro para versionamento
 ├── network.tf              # VCN, Internet Gateway, NAT Gateway, Route Tables e Subnets (Pública e Privada)
 ├── main.tf                 # Orquestração chamando blog_do_zeca e x86
-├── outputs.tf              # Saídas de IPs, Load Balancer e instruções de conexão
+├── outputs.tf              # Saídas de IPs, Load Balancer, Imagens descobertas e instruções
 │
 ├── blog_do_zeca/           # TUDO RELACIONADO AO KUBERNETES
 │   ├── main.tf             # Ponto de entrada do módulo K8s
@@ -88,34 +89,20 @@ oci-blog/
 
 ---
 
-## 🔍 Como Consultar os Valores para o `terraform.tfvars`
+## 🔍 Descoberta Automática de Recursos (Zero Consultas Manuais)
 
-### 1. Listar Availability Domains
-```bash
-oci iam availability-domain list --compartment-id <seu-compartment-ocid>
-```
+Graças ao arquivo [`datasources.tf`](file:///home/guilermiii/github/oci-blog/datasources.tf), o Terraform consulta a API da OCI automaticamente para:
+- Selecionar o **Availability Domain** adequado na sua região.
+- Localizar a imagem oficial mais recente do **Ubuntu 24.04 LTS (ARM aarch64)** para as instâncias do Kubernetes.
+- Localizar a imagem oficial mais recente do **Ubuntu 24.04 LTS (x86_64)** para as instâncias do Vault e VPN.
 
-### 2. Listar o OCID da Imagem Ubuntu 24.04 LTS para ARM (aarch64)
-```bash
-oci compute image list \
-  --compartment-id <seu-compartment-ocid> \
-  --operating-system "Canonical Ubuntu" \
-  --operating-system-version "24.04" \
-  --shape "VM.Standard.A1.Flex" \
-  --query 'data[?contains("display-name", `aarch64`)].{Name:"display-name", ID:id}' \
-  --output table
-```
+Você **não precisa** buscar OCIDs de imagens nem nomes de domínios manualmente! Basta definir o seu `compartment_ocid` no [`terraform.tfvars`](file:///home/guilermiii/github/oci-blog/terraform.tfvars).
 
-### 3. Listar o OCID da Imagem Ubuntu 24.04 LTS para x86 (x86_64)
-```bash
-oci compute image list \
-  --compartment-id <seu-compartment-ocid> \
-  --operating-system "Canonical Ubuntu" \
-  --operating-system-version "24.04" \
-  --shape "VM.Standard.E2.1.Micro" \
-  --query 'data[?!contains("display-name", `aarch64`)].{Name:"display-name", ID:id}' \
-  --output table
-```
+> 💡 **Como saber seu Compartment OCID**:
+> Se você utiliza a raiz da conta (Root Tenancy), consulte com:
+> ```bash
+> grep "tenancy" ~/.oci/config
+> ```
 
 ---
 

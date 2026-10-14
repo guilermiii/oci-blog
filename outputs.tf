@@ -23,6 +23,21 @@ output "vpn_private_ip" {
   description = "IP Privado da instância x86 VPN Management"
 }
 
+output "discovered_availability_domain" {
+  value       = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  description = "Availability Domain selecionado automaticamente"
+}
+
+output "discovered_ubuntu_arm_image" {
+  value       = data.oci_core_images.ubuntu_arm.images[0].display_name
+  description = "Imagem Ubuntu 24.04 ARM selecionada automaticamente"
+}
+
+output "discovered_ubuntu_x86_image" {
+  value       = data.oci_core_images.ubuntu_x86.images[0].display_name
+  description = "Imagem Ubuntu 24.04 x86 selecionada automaticamente"
+}
+
 output "k8s_join_instruction" {
   value       = "Acesse o nó Control Plane para obter o comando gerado em /home/ubuntu/kubeadm-join.sh e execute-o no Worker."
   description = "Instrução para conectar o worker ao cluster Kubernetes"
