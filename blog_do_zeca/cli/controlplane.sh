@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Script de Inicialização (Userdata) do Control Plane Node - Kubernetes (kubeadm)
+# Projeto: Blog-do-Zeca
+# SO: Ubuntu Server 24.04 LTS (ARM aarch64)
+# ==============================================================================
+
+set -euo pipefail
+
+LOG_FILE="/var/log/k8s-controlplane-init.log"
+exec > >(tee -a "${LOG_FILE}") 2>&1
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Iniciando provisionamento do Control Plane..."
+
+export DEBIAN_FRONTEND=noninteractive
+
+# 1. Aguardar liberação de bloqueios de pacotes
+while fuser /var/lib/dpkg/lock >/dev/null 2>&1 || fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+    echo "Aguardando liberação do bloqueio do apt/dpkg..."
+    sleep 5
+done
+
+# 2. Desabilitar Swap
+echo "Desabilitando swap..."
+swapoff -a
+sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+# 3. Configurar módulos de kernel para Kubernetes
+echo "Configurando módulos do kernel..."
+cat <<EOF | tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+modprobe overlay
+modprobe br_netfilter
+
+# 4. Configurar parâmetros de rede no sysctl
+echo "Configurando parâmetros no sysctl..."
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+sysctl --system
+
+# 5. Instalar dependências básicas e Container Runtime (containerd)
+echo "Instalando dependências e containerd..."
+apt-get update -y
+apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release containerd
+
+mkdir -p /etc/containerd
+containerd config default | tee /etc/containerd/config.toml
+sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+systemctl daemon-reload
+systemctl restart containerd
+systemctl enable containerd
+
+# 6. Configurar repositório oficial do Kubernetes (pkgs.k8s.io) e instalar kubelet, kubeadm e kubectl
+echo "Instalando kubelet, kubeadm e kubectl..."
+K8S_VERSION="v1.31"
+mkdir -p -m 755 /etc/apt/keyrings
+
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+chmod 644 /etc/apt/sources.list.d/kubernetes.list
+
+apt-get update -y
+apt-get install -y kubelet kubeadm kubectl
+apt-mark hold kubelet kubeadm kubectl
+
+systemctl enable kubelet
+
+# 7. Ajustar firewall nativo da OCI / iptables para permitir tráfego do cluster
+if command -v ufw >/dev/null 2>&1; then
+    ufw disable || true
+fi
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+
+# 8. Inicializar o cluster com kubeadm
+PRIVATE_IP=$(hostname -I | awk '{print $1}')
+echo "Inicializando kubeadm no IP privado: ${PRIVATE_IP}..."
+
+kubeadm init \
+    --pod-network-cidr=10.244.0.0/16 \
+    --apiserver-advertise-address="${PRIVATE_IP}" \
+    --node-name=k8s-control-plane \
+    --ignore-preflight-errors=NumCPU
+
+# 9. Configurar kubeconfig para root e usuário ubuntu
+echo "Configurando kubeconfig..."
+mkdir -p /root/.kube
+cp -i /etc/kubernetes/admin.conf /root/.kube/config
+
+mkdir -p /home/ubuntu/.kube
+cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config
+chown -R ubuntu:ubuntu /home/ubuntu/.kube
+
+# 10. Instalar CNI Plugin (Flannel)
+echo "Instalando CNI Flannel..."
+export KUBECONFIG=/etc/kubernetes/admin.conf
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+
+# 11. Gerar script de join para o Worker Node
+echo "Gerando comando de join para o Worker..."
+kubeadm token create --print-join-command > /home/ubuntu/kubeadm-join.sh
+chmod +x /home/ubuntu/kubeadm-join.sh
+chown ubuntu:ubuntu /home/ubuntu/kubeadm-join.sh
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Provisionamento do Control Plane concluído com sucesso!"
