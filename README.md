@@ -26,7 +26,7 @@ Projeto modular em Terraform para provisionamento de infraestrutura 100% elegív
   - 1 **IP Público Fixo Reservado** (`oci_core_public_ip` com `lifetime = "RESERVED"`).
   - Roteamento e health checks configurados para encaminhar tráfego web ao cluster.
 - **Backend Remoto Nativo OCI**:
-  - Utilização do backend nativo oficial `backend "oci"` apontando para o bucket `tf-state-zekinhas` (namespace `gr2g4g6jibse`, região `sa-saopaulo-1`).
+  - Utilização do backend nativo oficial `backend "oci"` apontando para o bucket `tf-state-lock-blog` (namespace `gr2g4g6jibse`, região `sa-saopaulo-1`).
   - Estado armazenado na raiz (`terraform.tfstate`) com bloqueio de estado (*state locking*) nativo.
 - **Segurança de Credenciais**:
   - Nenhuma credencial hardcoded. Lê a configuração e a chave `.pem` do perfil `~/.oci/config` (perfil `DEFAULT`).
@@ -40,7 +40,7 @@ Projeto modular em Terraform para provisionamento de infraestrutura 100% elegív
 oci-blog/
 ├── .gitignore
 ├── README.md
-├── backend.tf              # Backend NATIVO da OCI (backend "oci") no bucket tf-state-zekinhas
+├── backend.tf              # Backend NATIVO da OCI (backend "oci") no bucket tf-state-lock-blog
 ├── datasources.tf          # Descoberta AUTOMÁTICA de Availability Domain e Imagens Ubuntu 24.04 LTS
 ├── provider.tf             # Provedor OCI configurado com ~/.oci/config (perfil DEFAULT)
 ├── variables.tf            # Apenas declaração de variáveis de entrada (SEM NENHUM DEFAULT)
@@ -57,11 +57,9 @@ oci-blog/
 │   ├── security.tf         # Regras de segurança K8s (6443, 10250, Flannel 8472 UDP, NodePorts, Ingress do LB)
 │   ├── variables.tf        # Variáveis do módulo K8s (SEM NENHUM DEFAULT)
 │   ├── outputs.tf          # IP do LB, IPs privados do Control Plane e Worker
-│   ├── cli/
-│   │   ├── controlplane.sh # Script bash: containerd, kubeadm init, CNI Flannel, geração de token join
-│   │   └── worker.sh       # Script bash: containerd, kubeadm, kubelet, preparação para join
-│   └── manifests/
-│       └── k8s-sample.yaml # Exemplo de manifesto para testes do blog no K8s
+│   └── cli/
+│       ├── controlplane.sh # Script bash: containerd, kubeadm init, CNI Flannel, geração de token join
+│       └── worker.sh       # Script bash: containerd, kubeadm, kubelet, preparação para join
 │
 └── x86/                    # TUDO RELACIONADO ÀS MÁQUINAS x86
     ├── main.tf             # Ponto de entrada do módulo x86
