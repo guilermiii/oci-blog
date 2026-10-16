@@ -40,7 +40,8 @@ Projeto modular em Terraform para provisionamento de infraestrutura 100% elegív
 oci-blog/
 ├── .gitignore
 ├── README.md
-├── backend.tf              # Backend NATIVO da OCI (backend "oci") no bucket tf-state-lock-blog
+├── backend.tf              # Backend NATIVO da OCI (backend "oci") no bucket tf-state-zekinhas
+├── bastion.tf              # OCI Bastion Service gerenciado (Always Free) para acesso SSH privado
 ├── datasources.tf          # Descoberta AUTOMÁTICA de Availability Domain e Imagens Ubuntu 24.04 LTS
 ├── provider.tf             # Provedor OCI configurado com ~/.oci/config (perfil DEFAULT)
 ├── variables.tf            # Apenas declaração de variáveis de entrada (SEM NENHUM DEFAULT)
@@ -48,7 +49,10 @@ oci-blog/
 ├── terraform.tfvars.example# Modelo de exemplo seguro para versionamento
 ├── network.tf              # VCN, Internet Gateway, NAT Gateway, Route Tables e Subnets (Pública e Privada)
 ├── main.tf                 # Orquestração chamando blog_do_zeca e x86
-├── outputs.tf              # Saídas de IPs, Load Balancer, Imagens descobertas e instruções
+├── outputs.tf              # Saídas de IPs, Load Balancer, Imagens descobertas, Bastion e instruções
+│
+├── scripts/
+│   └── ssh-connect.sh      # Script utilitário para conexão SSH automática via OCI Bastion
 │
 ├── blog_do_zeca/           # TUDO RELACIONADO AO KUBERNETES
 │   ├── main.tf             # Ponto de entrada do módulo K8s
@@ -145,3 +149,25 @@ Você **não precisa** buscar OCIDs de imagens nem nomes de domínios manualment
    kubectl get nodes -o wide
    kubectl get pods -A
    ```
+
+---
+
+## 🔐 Acesso SSH Seguro às Instâncias Privadas (via OCI Bastion)
+
+Todas as instâncias residem na Subnet Privada sem IPs públicos diretos. Para conectar de forma simples e segura, utilize o script auxiliar [`scripts/ssh-connect.sh`](file:///home/guilermiii/github/oci-blog/scripts/ssh-connect.sh):
+
+```bash
+# Conectar ao nó Control Plane do Kubernetes:
+./scripts/ssh-connect.sh controlplane
+
+# Conectar ao nó Worker do Kubernetes:
+./scripts/ssh-connect.sh worker
+
+# Conectar à instância x86 Vault:
+./scripts/ssh-connect.sh vault
+
+# Conectar à instância x86 VPN:
+./scripts/ssh-connect.sh vpn
+```
+
+O script consulta os outputs do Terraform, cria a sessão de port-forwarding no OCI Bastion sob demanda e estabelece o túnel SSH diretamente para a máquina desejada.

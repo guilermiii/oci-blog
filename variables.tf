@@ -33,3 +33,8 @@ variable "tag_project_vpn" {
   type        = string
   description = "Valor da tag Project para a instância x86 VPN (ex: VpnManagement)"
 }
+
+variable "bastion_client_cidr_block_allow_list" {
+  type        = list(string)
+  description = "Lista de blocos CIDR autorizados a conectar ao OCI Bastion (ex: [\"0.0.0.0/0\"])"
+}

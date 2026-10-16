@@ -42,3 +42,13 @@ output "k8s_join_instruction" {
   value       = "Acesse o nó Control Plane para obter o comando gerado em /home/ubuntu/kubeadm-join.sh e execute-o no Worker."
   description = "Instrução para conectar o worker ao cluster Kubernetes"
 }
+
+output "bastion_id" {
+  value       = oci_bastion_bastion.bastion.id
+  description = "OCID do OCI Bastion Service"
+}
+
+output "bastion_target_subnet_id" {
+  value       = oci_bastion_bastion.bastion.target_subnet_id
+  description = "OCID da Subnet Privada associada ao Bastion"
+}

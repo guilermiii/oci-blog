@@ -97,3 +97,20 @@ resource "oci_core_network_security_group_security_rule" "ingress_flannel" {
     }
   }
 }
+
+# Regra de Ingress: SSH (porta 22) para acesso administrativo via OCI Bastion
+resource "oci_core_network_security_group_security_rule" "ingress_ssh_bastion" {
+  network_security_group_id = oci_core_network_security_group.k8s_nsg.id
+  direction                 = "INGRESS"
+  protocol                  = "6" # TCP
+  source_type               = "CIDR_BLOCK"
+  source                    = "10.0.0.0/16"
+  stateless                 = false
+
+  tcp_options {
+    destination_port_range {
+      min = 22
+      max = 22
+    }
+  }
+}

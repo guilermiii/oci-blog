@@ -11,3 +11,6 @@ ssh_public_key_path = "~/.ssh/id_rsa.pub"
 tag_project_arm   = "Blog-do-Zeca"
 tag_project_vault = "vault"
 tag_project_vpn   = "VpnManagement"
+
+# OCI Bastion Allow List
+bastion_client_cidr_block_allow_list = ["0.0.0.0/0"]
