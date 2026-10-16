@@ -45,10 +45,11 @@ EOF
 
 sysctl --system
 
-# 5. Instalar dependências básicas e Container Runtime (containerd)
+# 5. Instalar dependências básicas, utilitários de rede e Container Runtime (containerd)
 echo "Instalando dependências e containerd..."
+echo "127.0.0.1 $(hostname)" | tee -a /etc/hosts
 apt-get update -y
-apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release containerd
+apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release containerd conntrack socat ebtables iptables-persistent
 
 mkdir -p /etc/containerd
 containerd config default | tee /etc/containerd/config.toml
@@ -82,6 +83,13 @@ fi
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
+# Permitir tráfego interno da VCN e Pod Network antes das regras de bloqueio padrão da imagem OCI
+iptables -I INPUT 1 -s 10.0.0.0/16 -j ACCEPT
+iptables -I INPUT 1 -s 10.244.0.0/16 -j ACCEPT
+iptables -I FORWARD 1 -j ACCEPT
+if command -v netfilter-persistent >/dev/null 2>&1; then
+    netfilter-persistent save || true
+fi
 
 # 8. Criar arquivo de instruções para join
 cat <<'EOF' | tee /home/ubuntu/README-join.txt
